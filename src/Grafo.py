@@ -414,3 +414,12 @@ class Grafo:
                 if ct==0:                
                     arqOut.write(f'\nO {verticev} nao é Articulaçao!!\n')
                     ct+=1
+
+#----------------------FUNÇÕES ADICIONAIS DO TP2 -----------------------------------------#
+
+
+#-----------------FUNÇÃO QUE DETERMINA O CONJUNTO INDEPENDENTE OU ESTAVEL-----------------#
+
+
+#-----------------------FUNÇÃO DETERMINA O NÚMERO CROMÁTICO-------------------------------#
+
