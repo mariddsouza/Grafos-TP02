@@ -23,13 +23,16 @@ while (opcao1 != 0):
     print(
         "|          [0] - Encerrar a Execucao                                   |")
     print("|----------------------------------------------------------------------|")
+    print("Insira o numero da opcao desejada: ")
     opcao1 = int(input())
 
     if (opcao1 == 1):
-        print("\n")
+        
+        #print("\n")
         print("------------------------------------------------")
         arqInput = input("Insira o nome do arquivo de entrada: ")
         g = Grafo.leArquivo(arqInput)
+        print("\n")
         nomeOut = input("Insira o nome do arquivo de saida: ")
 
         with open(nomeOut, "w") as arqOut:
@@ -144,6 +147,7 @@ while (opcao1 != 0):
 
             arqOut.write(
                 "--------------------------ARQUIVO DE SAIDA--------------------------------------\n")
+            
             while(opcao3!=0):
                 print("\n")
                 print(
@@ -160,12 +164,13 @@ while (opcao1 != 0):
                     "|          [0] - Voltar para o Menu principal                          |")
                 print(
                     "|----------------------------------------------------------------------|")
+                print("Insira a opcao desejada: ")
                 opcao3 = int(input())
                 
                 if(opcao3 == 1):
-                
-                    arqOut.write(f'Heuristica Gulosa: {g.printSets()}\n')
-                    #g.printSets(arqOut)
+                    arqOut.write("\n Heuristica Gulosa \n")
+                    g.printSets(arqOut)
+                    print("Heuristica Gulosa apresentada no arquivo de saida!\n")
                 
                     
                 if(opcao3 == 0):
