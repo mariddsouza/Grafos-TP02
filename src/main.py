@@ -57,4 +57,4 @@ while (opcao!=0):
                 arqOut.write("\nO GRAFO POSSUI CICLO\n")
             else:
                 arqOut.write("\nO GRAFO NÃO POSSUI CICLO\n")
-
+            g.printSets(arqOut)
