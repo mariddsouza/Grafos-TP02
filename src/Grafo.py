@@ -1,247 +1,256 @@
-#Implementa as funções para a biblioteca de Grafos nao direcionados ponderados
+# Implementa as funções para a biblioteca de Grafos nao direcionados ponderados
 
-from collections import defaultdict 
-min_index=0
+from collections import defaultdict
+min_index = 0
+
+
 class Grafo:
-   
+
     def __init__(self, vertices):
         self.vertices = vertices
         self.grafo2 = defaultdict(list)
         self.graph = []
-        #conteudo das linhas em branco, vertices = numero de linhas
+        # conteudo das linhas em branco, vertices = numero de linhas
         self.grafo = [[0]*self.vertices for i in range(self.vertices)]
         self.adj = [[] for i in range(vertices)]
         self.Time = 0
-    
+        self.V = [] #Vertices
+        self.T = {} #Vizinhos
+        self.d_satur = {}
+	#O grau d de cada vertice é len(T[])
+        self.numeroCromatico = [] 
+        self.disponivel = {}
+        self.cor ={}
 
     def adiciona_aresta(self, u, v, p):
         # estou pensando em grafos direcionados simples
-        self.grafo[u-1][v-1] = p  #trocar = por += ser for grafo múltiplo
+        self.grafo[u-1][v-1] = p  # trocar = por += ser for grafo múltiplo
 
-        self.grafo[v-1][u-1] = p 
-    #so pra ficar mais facil de testar
+        self.grafo[v-1][u-1] = p
+    # so pra ficar mais facil de testar
+
     def mostra_matriz(self, arqOut):
         for i in range(self.vertices):
             arqOut.write(f'\n{self.grafo[i]}')
 
-
     #----------------------------------------------FUNCOES DO TRABALHO-----------------------------------------#
-    
+
     #--------ORDEM DO GRAFO----------------#
+
     def ordemGrafo(self):
             return self.vertices
-    #-------Densidade---------------
+    # -------Densidade---------------
+
     def densidade_grafo(self):
         return self.tamanhoGrafo() / self.ordemGrafo()
     #-------TAMANHO DO GRAFO--------------#
-    def tamanhoGrafo(self): 
+
+    def tamanhoGrafo(self):
         somaGraus = 0
         for i in range(self.vertices):
             somaGraus += self.grauVertice(i)
-        
+
         return int(self.vertices + somaGraus/2)
 
     #--------RETORNA VIZINHOS DE UM VERTICE FORNECIDO--------#
     def retornaVizinhos(self, u):
         vizinhos = []
-        c =1
+        c = 1
         listaVizinhos = self.grafo[u-1]
         for i in listaVizinhos:
-            if i!=0:
+            if i != 0:
                 vizinhos.append(c)
-            c+=1
+            c += 1
         return vizinhos
-    
+
     #--------GRAU DO VERTICE------#
-    def grauVertice(self, u): 
+    def grauVertice(self, u):
         return len(self.retornaVizinhos(u))
 
     #-------LER GRAFO-----------#
     @staticmethod
-    def leArquivo(nomeArquivo): 
-        with open(nomeArquivo, 'r') as arq: 
+    def leArquivo(nomeArquivo):
+        with open(nomeArquivo, 'r') as arq:
 
-            #lê a primeira linha
-            vertices = arq.readline() 
+            # lê a primeira linha
+            vertices = arq.readline()
             vertices = int(vertices)
 
-            #cria o grafo G com a quantidade de vértices
-            g = Grafo(vertices) 
+            # cria o grafo G com a quantidade de vértices
+            g = Grafo(vertices)
             for line in arq:
                 u, v, peso = line.rstrip('\n').split(' ')
-                g.adiciona_aresta(int(u),int(v), float(peso))
-                g.addEdge(int(u)-1,int(v)-1)
-                g.addEdgeKruskal(int(u)-1,int(v)-1, float(peso))
-                g.addc(int(u),int(v))
-            
+                g.adiciona_aresta(int(u), int(v), float(peso))
+                g.addEdge(int(u)-1, int(v)-1)
+                g.addEdgeKruskal(int(u)-1, int(v)-1, float(peso))
+                g.addc(int(u), int(v))
+                g.addArestaD(int(u),int(v))
+
         return g
-    
-    
+
     #-------Euleriano-----------#
     # Adiciona aresta (não direcionada)
-    def addEdge(self,u,v): 
-        self.grafo2[u].append(v) 
-        self.grafo2[v].append(u) 
+    def addEdge(self, u, v):
+        self.grafo2[u].append(v)
+        self.grafo2[v].append(u)
 
-    #Função para remover a aresta u-v do grafo
-    def rmvEdge(self, u, v): 
-        for index, key in enumerate(self.grafo2[u]): 
-            if key == v: 
-                self.grafo2[u].pop(index) 
-        for index, key in enumerate(self.grafo2[v]): 
-            if key == u: 
-                self.grafo2[v].pop(index) 
+    # Função para remover a aresta u-v do grafo
+    def rmvEdge(self, u, v):
+        for index, key in enumerate(self.grafo2[u]):
+            if key == v:
+                self.grafo2[u].pop(index)
+        for index, key in enumerate(self.grafo2[v]):
+            if key == u:
+                self.grafo2[v].pop(index)
 
   ### Importante - auxiliar para verificar pontes ###
   # Função baseada no DFS para contar os vértices alcançaveis por meio do vértice V.
-    def DFSCount(self, v, visited): 
+    def DFSCount(self, v, visited):
         count = 1
         visited[v] = True
-        for i in self.grafo2[v]: 
-            if visited[i] == False: 
-                count = count + self.DFSCount(i, visited)        
-        return count 
+        for i in self.grafo2[v]:
+            if visited[i] == False:
+                count = count + self.DFSCount(i, visited)
+        return count
 
     # Função que verifica se a aresta u-v pode ser considerada uma aresta no Tour de Euler
-    def isValidNextEdge(self, u, v): 
-        # A aresta u-v é valida em um dos seguintes casos: 
+    def isValidNextEdge(self, u, v):
+        # A aresta u-v é valida em um dos seguintes casos:
 
         # 1) Se v é o único vértice adjacente a u
-        if len(self.grafo2[u]) == 1: 
+        if len(self.grafo2[u]) == 1:
             return True
-        else: 
-            ''' 
+        else:
+            '''
             2) Caso existam múltiplos vértices adjacentes u-v
             verificar se não é uma ponte
-                
-      Para checarmos se é uma ponte: 
-            2.a) contamos os vértices alcançaveis a partir de u'''  
-            visited =[False]*(self.vertices) 
-            count1 = self.DFSCount(u, visited) 
+
+      Para checarmos se é uma ponte:
+            2.a) contamos os vértices alcançaveis a partir de u'''
+            visited = [False]*(self.vertices)
+            count1 = self.DFSCount(u, visited)
 
             '''2.b) Remove a aresta (u, v) e após remover verificamos a quantidade de vértices alcançaveis a partir de u novamente'''
-            self.rmvEdge(u, v) 
-            visited =[False]*(self.vertices) 
-            count2 = self.DFSCount(u, visited) 
+            self.rmvEdge(u, v)
+            visited = [False]*(self.vertices)
+            count2 = self.DFSCount(u, visited)
 
-            #2.c) Retornamos a aresta ao grafo, pois ela só foi removida para verificar se formavam-se pontes
-            self.addEdge(u,v) 
+            # 2.c) Retornamos a aresta ao grafo, pois ela só foi removida para verificar se formavam-se pontes
+            self.addEdge(u, v)
 
             # 2.d) Se count1 é maior que count2, então a aresta (u, v) é uma ponte e não pode ser removida retornando falso.
             return False if count1 > count2 else True
 
+    # Printa o tour de Euler tour começando pelo vértice u
+    def printEulerUtil(self, u, arqOut, c):
+        # Recorre para todos os vértices adjacentes a este vértice
+        for v in self.grafo2[u]:
+            # Se a vertice u-v não for removida e for uma próxima borda válida
+            if self.isValidNextEdge(u, v):
+                arqOut.write(f'{u}-{v} , ')
+                self.rmvEdge(u, v)
+                c += 1
+                self.printEulerUtil(v, arqOut, c)
 
-    # Printa o tour de Euler tour começando pelo vértice u 
-    def printEulerUtil(self, u,arqOut,c): 
-        #Recorre para todos os vértices adjacentes a este vértice
-        for v in self.grafo2[u]: 
-            #Se a vertice u-v não for removida e for uma próxima borda válida
-            if self.isValidNextEdge(u, v): 
-                arqOut.write(f'{u}-{v} , ') 
-                self.rmvEdge(u, v) 
-                c+=1
-                self.printEulerUtil(v,arqOut,c)
-                
-        if c==0:
+        if c == 0:
             arqOut.write('Não é euleriano\n')
         else:
             return
 
-    def printEulerTour(self,arqOut): 
-        #encontre um vertice com grau impar 
+    def printEulerTour(self, arqOut):
+        # encontre um vertice com grau impar
         u = 0
-        for i in range(self.vertices): 
-            if len(self.grafo2[i]) %2 != 0 : 
+        for i in range(self.vertices):
+            if len(self.grafo2[i]) % 2 != 0:
                 u = i
-                
+
                 break
-        # Imprimir tour começando do vértice ímpar  
-        self.printEulerUtil(u,arqOut,0)
-  
-  #------------------KRUSKAL--------
-    
-    
+        # Imprimir tour começando do vértice ímpar
+        self.printEulerUtil(u, arqOut, 0)
+
+  # ------------------KRUSKAL--------
+
     def addEdgeKruskal(self, u, v, w):
         self.graph.append([u, v, w])
- 
+
     # Função para encontrar o conjunto de um elemento i
     # (usa comprensão de caminho)
     def find(self, parent, i):
         if parent[i] == i:
             return i
         return self.find(parent, parent[i])
- 
+
     # vai fazer a união dos conjuntos x e y
     # (usa união por rank)
     def union(self, parent, rank, x, y):
         xroot = self.find(parent, x)
         yroot = self.find(parent, y)
- 
-        # Anexa uma árvore de classificação menor sob a raiz da árvore de classificação alta 
+
+        # Anexa uma árvore de classificação menor sob a raiz da árvore de classificação alta
         if rank[xroot] < rank[yroot]:
             parent[xroot] = yroot
         elif rank[xroot] > rank[yroot]:
             parent[yroot] = xroot
- 
-        #Se os ranks são os mesmos, então faça um como root e incremente seu rank em 1
+
+        # Se os ranks são os mesmos, então faça um como root e incremente seu rank em 1
         else:
             parent[yroot] = xroot
             rank[xroot] += 1
- 
+
     # Função principal que vai gerar a arvore minima usando kruskal
-    def KruskalMST(self,arqOut):
- 
+    def KruskalMST(self, arqOut):
+
         result = []  # vai armazenar a arvore resultante
-         
-        #index usado para ordenação
+
+        # index usado para ordenação
         i = 0
-         
-        #usado para o resultado[]
+
+        # usado para o resultado[]
         e = 0
- 
+
         '''Classifica todas as arestas em
         ordem não decrescente pelos pesos.
         Se não tivermos permissão para alterar o
         grafo, podemos criar uma cópia'''
         self.graph = sorted(self.graph,
                             key=lambda item: item[2])
- 
+
         parent = []
         rank = []
- 
+
         # Crie subconjuntos vertices com elementos únicos
         for node in range(self.vertices):
             parent.append(node)
             rank.append(0)
- 
+
         # O número de arestas a serem tomadas é igual a vertices-1
         while e < self.vertices - 1:
- 
+
             # Passo 2: Escolha a menor aresta e incremente o índice para a próxima iteração
             u, v, w = self.graph[i]
             i = i + 1
             x = self.find(parent, u)
             y = self.find(parent, v)
- 
-            ''' Se a inclusão desta aresta não causar ciclo, 
-            inclua-a no resultado e incremente o 
+
+            ''' Se a inclusão desta aresta não causar ciclo,
+            inclua-a no resultado e incremente o
             índice de resultado para a próxima aresta'''
             if x != y:
                 e = e + 1
                 result.append([u, v, w])
                 self.union(parent, rank, x, y)
             # Caso contrário, descarte a aresta
- 
+
         minimumCost = 0
         arqOut.write("\nArvore Geradora Minima: \n")
         for u, v, weight in result:
             minimumCost += weight
             arqOut.write(f'{u+1} -- {v+1} == {weight}\n')
-            
+
         arqOut.write(f'Peso total: {minimumCost} \n')
 
-#----------------BFS---------
-    def BFS(self,arqOut):
+# ----------------BFS---------
+    def BFS(self, arqOut):
         visited = [0 for i in range(self.vertices)]
 
         # Add the start node to the queue
@@ -257,7 +266,7 @@ class Grafo:
 
         while True:
 
-            for x in range (0, len(visited)):
+            for x in range(0, len(visited)):
 
                             # Check is route exists and that node isn't visited
                 if self.grafo[node][x] != 0 and visited[x] == 0:
@@ -268,7 +277,7 @@ class Grafo:
                                     # Enqueue element
                     queue.append(x)
 
-            # When queue is empty, break		
+            # When queue is empty, break
             if len(queue) == 0:
                 break
 
@@ -277,17 +286,17 @@ class Grafo:
                             # Dequeue element from queue
                 node = queue.pop(0)
                 arqOut.write(f'{node+1} - ')
-    
-#componentes conexas
+
+# componentes conexas
 
     def Util(self, temp, v, visited):
- 
+
         # Mark the current vertex as visited
         visited[v] = True
- 
+
         # Store the vertex to list
         temp.append(v+1)
- 
+
         # Repeat for all vertices adjacent
         # to this vertex v
         for i in self.adj[v]:
@@ -296,6 +305,7 @@ class Grafo:
         return temp
      # Method to retrieve connected components
     # in an undirected graph
+
     def connectedComponents(self):
         visited = []
         cc = []
@@ -306,19 +316,20 @@ class Grafo:
                 temp = []
                 cc.append(self.Util(temp, v, visited))
         return cc
+
     def addc(self, v, w):
         self.adj[v-1].append(w-1)
         self.adj[w-1].append(v-1)
 
-#grafo é ciclo
+# grafo é ciclo
 
     def isCyclicUtil(self, v, visited, recStack):
- 
+
         # Mark current node as visited and
         # adds to recursion stack
         visited[v] = True
         recStack[v] = True
- 
+
         # Recur for all neighbours
         # if any neighbour is visited and in
         # recStack then graph is cyclic
@@ -328,67 +339,66 @@ class Grafo:
                     return True
             elif recStack[neighbour] == True:
                 return True
- 
+
         # The node needs to be poped from
         # recursion stack before function ends
         recStack[v] = False
         return False
- 
+
     # Returns true if graph is cyclic else false
     def isCyclic(self):
         visited = [False] * (self.vertices+1)
         recStack = [False] * (self.vertices+1)
         for node in range(self.vertices):
             if visited[node] == False:
-                if self.isCyclicUtil(node,visited,recStack) == True:
+                if self.isCyclicUtil(node, visited, recStack) == True:
                     return True
         return False
 
-#articulaçao
+# articulaçao
     def APUtil(self, u, visited, ap, parent, low, disc):
- 
+
         # Count of children in current node
         children = 0
- 
+
         # Mark the current node as visited and print it
-        visited[u]= True
- 
+        visited[u] = True
+
         # Initialize discovery time and low value
         disc[u] = self.Time
         low[u] = self.Time
         self.Time += 1
- 
+
         # Recur for all the vertices adjacent to this vertex
         for v in self.grafo2[u]:
             # If v is not visited yet, then make it a child of u
             # in DFS tree and recur for it
-            if visited[v] == False :
+            if visited[v] == False:
                 parent[v] = u
                 children += 1
                 self.APUtil(v, visited, ap, parent, low, disc)
- 
+
                 # Check if the subtree rooted with v has a connection to
                 # one of the ancestors of u
                 low[u] = min(low[u], low[v])
- 
+
                 # u is an articulation point in following cases
                 # (1) u is root of DFS tree and has two or more children.
                 if parent[u] == -1 and children > 1:
                     ap[u] = True
- 
-                #(2) If u is not root and low value of one of its child is more
+
+                # (2) If u is not root and low value of one of its child is more
                 # than discovery value of u.
                 if parent[u] != -1 and low[v] >= disc[u]:
-                    ap[u] = True   
-                     
-                # Update low value of u for parent function calls   
+                    ap[u] = True
+
+                # Update low value of u for parent function calls
             elif v != parent[u]:
                 low[u] = min(low[u], disc[v])
- 
- 
+
     # The function to do DFS traversal. It uses recursive APUtil()
-    def AP(self,verticev,arqOut):
-  
+    def AP(self, verticev, arqOut):
+
         # Mark all the vertices as not visited
         # and Initialize parent and visited,
         # and ap(articulation point) arrays
@@ -396,188 +406,141 @@ class Grafo:
         disc = [float("Inf")] * (self.vertices)
         low = [float("Inf")] * (self.vertices)
         parent = [-1] * (self.vertices)
-        ap = [False] * (self.vertices) # To store articulation points
- 
+        ap = [False] * (self.vertices)  # To store articulation points
+
         # Call the recursive helper function
         # to find articulation points
         # in DFS tree rooted with vertex 'i'
         for i in range(self.vertices):
             if visited[i] == False:
                 self.APUtil(i, visited, ap, parent, low, disc)
-        ct=0
-        for index, value in enumerate (ap):
-            if value == True: 
-                if index==verticev:
+        ct = 0
+        for index, value in enumerate(ap):
+            if value == True:
+                if index == verticev:
                     arqOut.write(f'\nO {verticev} é Articulaçao!!\n')
-                    ct+=1
+                    ct += 1
             else:
-                if ct==0:                
+                if ct == 0:
                     arqOut.write(f'\nO {verticev} nao é Articulaçao!!\n')
-                    ct+=1
-        #TP2
-        
+                    ct += 1
+        # TP2
+
         # Python Program to implement
         # the above approach
-        
+
         # Recursive Function to find the
-        # Maximal Independent Vertex Set    
-    def graphSets(self,graph):
-            
-            # Base Case - Given Graph 
+        # Maximal Independent Vertex Set
+    def graphSets(self, graph):
+
+            # Base Case - Given Graph
             # has no nodes
         if(len(graph) == 0):
             return []
-            
+
             # Base Case - Given Graph
             # has 1 node
         if(len(graph) == 1):
             return [list(graph.keys())[0]]
-            
+
             # Select a vertex from the graph
         vCurrent = list(graph.keys())[0]
-            
+
             # Case 1 - Proceed removing
             # the selected vertex
             # from the Maximal Set
         graph2 = dict(graph)
-            
-            # Delete current vertex 
+
+            # Delete current vertex
             # from the Graph
         del graph2[vCurrent]
-            
-            # Recursive call - Gets 
+
+            # Recursive call - Gets
             # Maximal Set,
-            # assuming current Vertex 
+            # assuming current Vertex
             # not selected
         res1 = self.graphSets(graph2)
-            
+
             # Case 2 - Proceed considering
             # the selected vertex as part
             # of the Maximal Set
-        
+
             # Loop through its neighbours
         for v in graph[vCurrent]:
-                
-                # Delete neighbor from 
+
+                # Delete neighbor from
                 # the current subgraph
             if(v in graph2):
                 del graph2[v]
-            
+
             # This result set contains VFirst,
             # and the result of recursive
             # call assuming neighbors of vFirst
             # are not selected
         res2 = [vCurrent] + self.graphSets(graph2)
-            
-            # Our final result is the one 
+
+            # Our final result is the one
             # which is bigger, return it
         if(len(res1) > len(res2)):
             return res1
         return res2
-        
-    def printSets(self,arqOut):
+
+    def printSets(self, arqOut):
         maximalIndependentSet = self.graphSets(self.grafo2)
         print(maximalIndependentSet)
-        # Prints the Result 
+        # Prints the Result
         arqOut.write(f'\nConjunto independente: ')
         for i in maximalIndependentSet:
             arqOut.write(f'{i+1} ')
+
+    def criaVerticeD(self, v):
+        self.V += [v]
+        self.T[v] = []
+        self.d_satur[v] = 0
+        self.cor[v] = None
+
+    def addArestaD(self, a, b):
+        if not a in self.V:
+            self.criaVerticeD(a)
+        if not b in self.V:
+            self.criaVerticeD(b)
+        self.T[a] += [b]
+        self.T[b] += [a]
+
+    def escolher(self):
+        u = -1
+        for i in self.V:
+            if self.disponivel[i]:
+                if u is -1:
+                    u=i
+                elif self.d_satur[i]>self.d_satur[u]:
+                    u=i
+                elif self.d_satur[i]==self.d_satur[u] and len(self.T[i]) > len(self.T[u]):
+                    u=i
+        return u
+		
+    def DSATUR_ALGORITHM(self,arqOut):
+        for u in self.V:
+            self.disponivel[u]=True
+		
+        while True in self.disponivel.values():
+            u = self.escolher()
+            
+            self.disponivel[u]=False
+			
+            cores_disponiveis = ['darkgray','turquesa','salmao','coral','indigo','violeta','rosa', 'azul', 'verde', 'lilás','vermelho','preto','amarelo','laranja','marrom','cinza','roxo','branco','gelo','ciano','mel','prata','ouro','platina','verdepantano','bege']	
+			
+            for vizinho in self.T[u]:
+                self.d_satur[vizinho]+=1
+                if self.cor[vizinho] in cores_disponiveis:
+                    cores_disponiveis.remove(self.cor[vizinho])
                     
-                    
+			
+            
+            self.cor[u] = cores_disponiveis[0] 
+            if self.cor[u] not in self.numeroCromatico:
+                self.numeroCromatico.append(self.cor[u])
+            
+        arqOut.write(f'\nNumero cromatico: {len(self.numeroCromatico)} \n')
+			
 
-#----------------------FUNÇÕES DO TRABALHO PRATICO 02-------------------------------------#
-
-
-#-----------------------FUNÇÃO DETERMINA O NÚMERO CROMÁTICO-------------------------------#
-'''
-# Python program to find single source shortest paths
-# for Directed Acyclic Graphs Complexity :OV(V+E)
-from collections import defaultdict
-
-# Graph is represented using adjacency list. Every
-# node of adjacency list contains vertex number of
-# the vertex to which edge connects. It also contains
-# weight of the edge
-class Graph:
-	def __init__(self,vertices):
-
-		self.V = vertices # No. of vertices
-
-		# dictionary containing adjacency List
-		self.graph = defaultdict(list)
-
-	# function to add an edge to graph
-	def addEdge(self,u,v,w):
-		self.graph[u].append((v,w))
-
-
-	# A recursive function used by shortestPath
-	def topologicalSortUtil(self,v,visited,stack):
-
-		# Mark the current node as visited.
-		visited[v] = True
-
-		# Recur for all the vertices adjacent to this vertex
-		if v in self.graph.keys():
-			for node,weight in self.graph[v]:
-				if visited[node] == False:
-					self.topologicalSortUtil(node,visited,stack)
-
-		# Push current vertex to stack which stores topological sort
-		stack.append(v)
-
-
-	
-	def shortestPath(self, s):
-
-		# Mark all the vertices as not visited
-		visited = [False]*self.V
-		stack =[]
-
-		# Call the recursive helper function to store Topological
-		# Sort starting from source vertices
-		for i in range(self.V):
-			if visited[i] == False:
-				self.topologicalSortUtil(s,visited,stack)
-
-		# Initialize distances to all vertices as infinite and
-		# distance to source as 0
-		dist = [float("Inf")] * (self.V)
-		dist[s] = 0
-
-		# Process vertices in topological order
-		while stack:
-
-			# Get the next vertex from topological order
-			i = stack.pop()
-
-			# Update distances of all adjacent vertices
-			for node,weight in self.graph[i]:
-				if dist[node] > dist[i] + weight:
-					dist[node] = dist[i] + weight
-
-		# Print the calculated shortest distances
-		for i in range(self.V):
-			print (("%d" %dist[i]) if dist[i] != float("Inf") else "Inf" ,end=" ")
-
-
-g = Graph(6)
-g.addEdge(0, 1, 5)
-g.addEdge(0, 2, 3)
-g.addEdge(1, 3, 6)
-g.addEdge(1, 2, 2)
-g.addEdge(2, 4, 4)
-g.addEdge(2, 5, 2)
-g.addEdge(2, 3, 7)
-g.addEdge(3, 4, -1)
-g.addEdge(4, 5, -2)
-
-# source = 1
-s = 1
-
-print ("Following are shortest distances from source %d " % s)
-g.shortestPath(s)
-
-# This code is contributed by Neelam Yadav
-
-'''

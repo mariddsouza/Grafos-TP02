@@ -1,7 +1,7 @@
 from email.policy import default
+from re import I
 from Grafo import Grafo
 from converteJSON import converteJSON
-
 opcao1 = 1
 opcao2 = 1
 opcao3 = 1
@@ -26,14 +26,15 @@ while (opcao1 != 0):
     print("Insira o numero da opcao desejada: ")
     opcao1 = int(input())
 
+    
     if (opcao1 == 1):
-        
-        #print("\n")
         print("------------------------------------------------")
         arqInput = input("Insira o nome do arquivo de entrada: ")
         g = Grafo.leArquivo(arqInput)
         print("\n")
         nomeOut = input("Insira o nome do arquivo de saida: ")
+        #print("\n")
+        
 
         with open(nomeOut, "w") as arqOut:
             arqOut.write(
@@ -125,14 +126,13 @@ while (opcao1 != 0):
                 if(opcao2 == 0):
                     default
 
-    if (opcao1 == 2):
-        print("\n")
-        
+    elif (opcao1 == 2):
+ 
         print("------------------------------------------------")
         arqInput = input("Insira o nome do arquivo de entrada: ")
         g = Grafo.leArquivo(arqInput)
+        print("\n")
         nomeOut = input("Insira o nome do arquivo de saida: ")
-
         with open(nomeOut, "w") as arqOut:
             arqOut.write(
             "\n--------------------------IMPRIMINDO GRAFO--------------------------------------\n")
@@ -172,6 +172,11 @@ while (opcao1 != 0):
                     g.printSets(arqOut)
                     print("Heuristica Gulosa apresentada no arquivo de saida!\n")
                 
-                    
+                if(opcao3==2):
+                   g.DSATUR_ALGORITHM(arqOut)   
                 if(opcao3 == 0):
                     default
+    if (opcao1 == 3): # Lê arquivo JSON
+        arqJSON = input("Digite o nome do arquivo JSON: ")
+        arqOut = input("Digite o nome do arquivo de saída: ")
+        converteJSON(arqJSON, arqOut)
