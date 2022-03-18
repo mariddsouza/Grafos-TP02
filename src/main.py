@@ -141,9 +141,6 @@ while (opcao1 != 0):
 
             arqOut.write(
                 "\n----------------------------------------------------------------------------\n")
-            vertice = int(input(f'Selecione o vertice: (1 - {g.vertices})\n'))
-            b = [0 for i in range(g.vertices+1)]
-            a = [0 for i in range(g.vertices+1)]
 
             arqOut.write(
                 "--------------------------ARQUIVO DE SAIDA--------------------------------------\n")
